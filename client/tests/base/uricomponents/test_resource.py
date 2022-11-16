@@ -94,3 +94,9 @@ class TestResource(TestCase):
         # name only will be treated as a version
         with self.assertRaises(NoMatchException):
             Resource("mnist")
+
+    def test_short_uri(self) -> None:
+        p = Resource("local/project/self/mnist", typ=ResourceType.runtime)
+        assert p.name == "mnist"
+        assert p.project.name == "self"
+        assert p.instance.alias == "local"

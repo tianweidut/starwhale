@@ -1,5 +1,6 @@
 import io
 import os
+import time
 from pathlib import Path
 
 import torch
@@ -8,6 +9,7 @@ from PIL import Image as PILImage
 from torchvision import transforms
 
 from starwhale import Image, PipelineHandler, multi_classification
+from starwhale.utils import console
 from starwhale.api.service import api
 
 from .model import Net
@@ -35,10 +37,18 @@ class CIFAR10Inference(PipelineHandler):
     )
     def evaluate(self, ppl_result):
         result, label, pr = [], [], []
+        console.debug("enter evaluate process...")
+        start = time.time()
         for _data in ppl_result:
+            console.debug(f"get results time: {time.time() - start}")
+            start = time.time()
             label.append(_data["input"]["label"])
             result.extend(_data["output"][0])
             pr.extend(_data["output"][1])
+            console.debug(f"append time: {time.time() - start}")
+            start = time.time()
+
+        console.debug("finish user evaluate")
         return label, result, pr
 
     def _pre(self, input: Image) -> torch.Tensor:

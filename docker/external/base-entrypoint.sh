@@ -2,7 +2,7 @@
 
 set -e
 
-if [ "${SW_TASK_DISABLE_DEBUG}" != "1" ]; then
+if [ "${SW_TASK_ENTRYPOINT_SCRIPT_DEBUG}" = "1" ]; then
     set -x
 fi
 
@@ -15,7 +15,7 @@ RUNTIME_RESTORED=${SW_USER_RUNTIME_RESTORED:-0}
 
 welcome() {
     echo "************************************"
-    echo "StarWhale Base Entrypoint"
+    echo "Starwhale Base Entrypoint"
     echo "Date: `date -u +%Y-%m-%dT%H:%M:%SZ`"
     echo "Starwhale Version: ${SW_VERSION}"
     echo "Python Version: ${PYTHON_VERSION}"

@@ -2,7 +2,7 @@
 
 set -e
 
-if [ "${SW_TASK_DISABLE_DEBUG}" != "1" ]; then
+if [ "${SW_TASK_ENTRYPOINT_SCRIPT_DEBUG}" = "1" ]; then
     set -x
 fi
 
@@ -18,7 +18,7 @@ RUNTIME_RESTORED=${SW_USER_RUNTIME_RESTORED:-0}
 
 welcome() {
     echo "===================================="
-    echo "StarWhale Docker Entrypoint"
+    echo "Starwhale Docker Entrypoint"
     echo "Date: `date -u +%Y-%m-%dT%H:%M:%SZ`"
     echo "Version: `swcli --version`"
     echo "Run: $1 "
@@ -33,6 +33,14 @@ welcome() {
     then
       useradd -g ${SW_USER_GROUP_ID} -u ${SW_USER_ID} ${SW_USER}
       su ${SW_USER}
+    fi
+
+
+    if [ "${SW_TASK_ENTRYPOINT_SCRIPT_DEBUG}" = "1" ]; then
+        echo "===================================="
+        echo "Environment Variables:"
+        env
+        echo "===================================="
     fi
 }
 

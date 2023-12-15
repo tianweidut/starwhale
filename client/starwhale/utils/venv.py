@@ -6,6 +6,7 @@ import typing as t
 import platform
 import subprocess
 from pathlib import Path, PurePath, PosixPath
+from tkinter import SW
 from functools import lru_cache
 
 import yaml
@@ -207,18 +208,41 @@ def render_python_env_activate(
     workdir: Path,
     local_packaged_env: bool = False,
     verbose: bool = True,
+    runtime_uri: str = "",
 ) -> None:
     if mode not in (PythonRunEnv.CONDA, PythonRunEnv.VENV):
         raise NoSupportError(f"mode({mode}) render python env activate scripts")
 
+    envs = {
+        SWShellActivatedRuntimeEnv.MODE: mode,
+        SWShellActivatedRuntimeEnv.PREFIX: str(prefix_path),
+        SWShellActivatedRuntimeEnv.URI: runtime_uri,
+    }
+
+    inject_envs = " ".join({f"{k}={v} " for k, v in envs.items()})
+
     if local_packaged_env:
         # conda local mode(conda-pack) should be activated by the source command.
-        venv_activate_render(prefix_path, workdir, relocate=mode == PythonRunEnv.VENV)
+        venv_activate_render(
+            prefix_path,
+            workdir,
+            relocate=mode == PythonRunEnv.VENV,
+            inject_envs=inject_envs,
+            verbose=verbose,
+        )
     else:
         if mode == PythonRunEnv.CONDA:
-            conda_activate_render(prefix_path, workdir, verbose=verbose)
+            conda_activate_render(
+                prefix_path, workdir, verbose=verbose, inject_envs=inject_envs
+            )
         else:
-            venv_activate_render(prefix_path, workdir, relocate=False, verbose=verbose)
+            venv_activate_render(
+                prefix_path,
+                workdir,
+                relocate=False,
+                verbose=verbose,
+                inject_envs=inject_envs,
+            )
 
 
 def parse_python_version(s: str) -> PythonVersionField:
@@ -503,8 +527,14 @@ def conda_env_update(
     check_call(cmd)
 
 
-def conda_activate_render(env_dir: Path, workdir: Path, verbose: bool = True) -> None:
-    sw_cntr_content = """
+def conda_activate_render(
+    env_dir: Path,
+    workdir: Path,
+    verbose: bool = True,
+    inject_envs: str = "",
+) -> None:
+    sw_cntr_content = f"""
+export {inject_envs}
 _conda_hook="$(/opt/miniconda3/bin/conda shell.bash hook)"
 cat >> /dev/stdout << EOF
 $_conda_hook
@@ -514,6 +544,7 @@ EOF
 
     host_content = f"""
 echo 'conda activate {env_dir.absolute()}'
+export {inject_envs}
 """
     _render_sw_activate(sw_cntr_content, host_content, workdir, verbose)
 
@@ -523,10 +554,12 @@ def venv_activate_render(
     workdir: Path,
     relocate: bool = False,
     verbose: bool = True,
+    inject_envs: str = "",
 ) -> None:
     bin = f"{venvdir}/bin"
     host_content = f"""
 echo 'source {venvdir}/bin/activate'
+export {inject_envs}
 """
 
     if relocate:
@@ -539,6 +572,7 @@ sed -i 's#^VIRTUAL_ENV=.*$#VIRTUAL_ENV={venvdir}#g' {bin}/activate
 rm -rf {bin}/python3
 ln -s /usr/bin/python3 {bin}/python3
 echo 'source {bin}/activate'
+export {inject_envs}
 """
     else:
         sw_cntr_content = host_content

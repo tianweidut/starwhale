@@ -2064,6 +2064,7 @@ class StandaloneRuntime(Runtime, LocalStorageBundleMixin):
                             "local_packaged_env", False
                         ),
                         verbose=verbose,
+                        runtime_uri="",
                     ),
                 ),
             ]

@@ -1,4 +1,6 @@
 name: helloworld
 mode: venv
+environment:
+  starwhale_version: "0.6.10"
 dependencies:
   - requirements.txt

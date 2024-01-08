@@ -4,3 +4,4 @@ onnxruntime
 tqdm
 requests
 pillow
+transformers==4.31.0

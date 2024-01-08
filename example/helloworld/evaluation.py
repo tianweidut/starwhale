@@ -3,6 +3,7 @@ from dataclasses import field, dataclass
 
 import numpy as np
 import onnxruntime as rt
+from transformers import TrainingArguments
 
 from starwhale import Image, argument, evaluation, multi_classification
 
@@ -12,6 +13,11 @@ _g_model = None
 @dataclass
 class EvaluationArguments:
     reshape: int = field(default=64, metadata={"help": "reshape image size"})
+
+
+@dataclass
+class HFTrainingArguments(TrainingArguments):
+    output_dir: str = field(default="output", metadata={"help": "output directory"})
 
 
 def _load_model():
@@ -25,12 +31,12 @@ def _load_model():
     return _g_model
 
 
-@argument(EvaluationArguments)
+@argument((EvaluationArguments, HFTrainingArguments))
 @evaluation.predict(
     resources={"memory": {"request": "500M", "limit": "2G"}},
     log_mode="plain",
 )
-def predict_image(data: dict, argument: EvaluationArguments):
+def predict_image(data: dict, argument):
     # def predict_image(data: dict, argument: EvaluationArguments):
     # def predict_image(data: dict, external=None):
     # def predict_image(data: dict, external=None, argument: EvaluationArguments=None):
@@ -38,7 +44,7 @@ def predict_image(data: dict, argument: EvaluationArguments):
     model = _load_model()
     input_name = model.get_inputs()[0].name
     label_name = model.get_outputs()[0].name
-    input_array = [img.to_numpy().astype(np.float32).reshape(argument.reshape)]
+    input_array = [img.to_numpy().astype(np.float32).reshape(argument[0].reshape)]
     pred = model.run([label_name], {input_name: input_array})[0]
     return pred.item()
 
